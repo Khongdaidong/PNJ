@@ -238,16 +238,15 @@ const main = async () => {
   const storeKeywords = [
     "cua hang",
     "mo cua hang",
-    "mo moi",
-    "mo rong",
+    "mo moi cua hang",
+    "mo them cua hang",
     "mo them",
-    "net new",
     "store",
     "stores",
-    "opening",
-    "expansion",
+    "store opening",
+    "opening store",
+    "opened store",
     "showroom",
-    "chuoi",
   ];
   const isStoreRelated = (item) => {
     const text = normalizeText(`${item.title || ""} ${item.summary || ""} ${item.tag || ""}`);
