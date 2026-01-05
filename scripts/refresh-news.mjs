@@ -3,6 +3,8 @@ import { writeFile } from "node:fs/promises";
 const FEED_URLS = [
   "https://www.bing.com/news/search?q=PNJ%20co%20phieu&format=rss",
   "https://www.bing.com/news/search?q=PNJ%20jewelry%20Vietnam&format=rss",
+  "https://www.bing.com/news/search?q=PNJ%20m%E1%BB%9F%20c%E1%BB%ADa%20h%C3%A0ng&format=rss",
+  "https://www.bing.com/news/search?q=PNJ%20store%20opening&format=rss",
 ];
 const PNJ_IR_URL = "https://www.pnj.com.vn/quan-he-co-dong/thong-bao/";
 
@@ -233,6 +235,24 @@ const main = async () => {
   const seenTitle = new Set();
   const seenUrl = new Set();
   const candidates = [];
+  const storeKeywords = [
+    "cua hang",
+    "mo cua hang",
+    "mo moi",
+    "mo rong",
+    "mo them",
+    "net new",
+    "store",
+    "stores",
+    "opening",
+    "expansion",
+    "showroom",
+    "chuoi",
+  ];
+  const isStoreRelated = (item) => {
+    const text = normalizeText(`${item.title || ""} ${item.summary || ""} ${item.tag || ""}`);
+    return storeKeywords.some((kw) => text.includes(kw));
+  };
 
   const irItems = await loadIrItems();
   for (const item of irItems) {
@@ -284,6 +304,9 @@ const main = async () => {
   const otherItems = candidates
     .filter((item) => !item.pnjIr)
     .sort((a, b) => b.ts - a.ts);
+  const storeCandidate = candidates
+    .filter(isStoreRelated)
+    .sort((a, b) => b.ts - a.ts)[0];
 
   const results = [];
   const seenSelected = new Set();
@@ -295,8 +318,11 @@ const main = async () => {
     results.push(item);
   };
 
+  // Always try to include the latest store-related article
+  pushItem(storeCandidate);
+
   for (const item of pnjItems) {
-    if (results.length >= 2) break;
+    if (results.length >= MAX_ITEMS) break;
     pushItem(item);
   }
 
