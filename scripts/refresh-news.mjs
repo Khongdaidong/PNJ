@@ -251,7 +251,7 @@ const main = async () => {
   ];
   const isStoreRelated = (item) => {
     const text = normalizeText(`${item.title || ""} ${item.summary || ""} ${item.tag || ""}`);
-    return storeKeywords.some((kw) => text.includes(kw));
+    return text.includes("pnj") && storeKeywords.some((kw) => text.includes(kw));
   };
 
   const irItems = await loadIrItems();
