@@ -307,6 +307,18 @@ const main = async () => {
   const storeCandidate = candidates
     .filter(isStoreRelated)
     .sort((a, b) => b.ts - a.ts)[0];
+  const addStoreCountNote = (item) => {
+    if (!item) return item;
+    const text = normalizeText(`${item.title || ""} ${item.summary || ""}`);
+    const match = text.match(/(\d{1,4})\s+(cua hang|store|showroom)/);
+    if (match?.[1]) {
+      return {
+        ...item,
+        summary: `${item.summary} (Phát hiện số liệu cửa hàng: ${match[1]})`,
+      };
+    }
+    return item;
+  };
 
   const results = [];
   const seenSelected = new Set();
@@ -319,7 +331,20 @@ const main = async () => {
   };
 
   // Always try to include the latest store-related article
-  pushItem(storeCandidate);
+  if (storeCandidate) {
+    pushItem(addStoreCountNote(storeCandidate));
+  } else {
+    const nowTs = Date.now();
+    pushItem({
+      title: "Cập nhật mở cửa hàng PNJ",
+      summary: "Không thấy tin mở cửa hàng gần đây (90 ngày). Cần bổ sung số liệu từ nguồn chính thức.",
+      url: "",
+      date: formatDate(new Date(nowTs).toISOString()),
+      source: "Auto-generated",
+      tag: "Hoat dong",
+      ts: nowTs,
+    });
+  }
 
   for (const item of pnjItems) {
     if (results.length >= MAX_ITEMS) break;
