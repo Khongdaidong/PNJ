@@ -10,6 +10,8 @@ const PNJ_IR_URL = "https://www.pnj.com.vn/quan-he-co-dong/thong-bao/";
 
 const MAX_ITEMS = 5;
 const OUTPUT_PATH = new URL("../public/news.json", import.meta.url);
+const FALLBACK_STORE_COUNT = 429;
+const FALLBACK_STORE_ASOF = "FY2025 baseline";
 
 const decodeHtml = (text) =>
   text
@@ -306,6 +308,13 @@ const main = async () => {
   const storeCandidate = candidates
     .filter(isStoreRelated)
     .sort((a, b) => b.ts - a.ts)[0];
+  const storeWithCount = candidates
+    .filter((item) => {
+      if (!isStoreRelated(item)) return false;
+      const text = normalizeText(`${item.title || ""} ${item.summary || ""}`);
+      return /(\d{1,4})\s+(cua hang|store|showroom)/.test(text);
+    })
+    .sort((a, b) => b.ts - a.ts)[0];
   const addStoreCountNote = (item) => {
     if (!item) return item;
     const text = normalizeText(`${item.title || ""} ${item.summary || ""}`);
@@ -330,15 +339,21 @@ const main = async () => {
   };
 
   // Always try to include the latest store-related article
-  if (storeCandidate) {
-    console.log(`[news] Store-related article chosen: ${storeCandidate.title}`);
-    pushItem(addStoreCountNote(storeCandidate));
+  if (storeWithCount) {
+    console.log(`[news] Store-related article with count: ${storeWithCount.title}`);
+    pushItem(addStoreCountNote(storeWithCount));
+  } else if (storeCandidate) {
+    console.log(`[news] Store-related article (no count detected): ${storeCandidate.title}`);
+    pushItem({
+      ...storeCandidate,
+      summary: `${storeCandidate.summary} (Chưa thấy số lượng cửa hàng; fallback gần nhất: ${FALLBACK_STORE_COUNT} cửa hàng, ${FALLBACK_STORE_ASOF})`,
+    });
   } else {
     const nowTs = Date.now();
     console.warn("[news] No store-related article found; adding fallback store update.");
     pushItem({
-      title: "Cập nhật mở cửa hàng PNJ",
-      summary: "Không thấy tin mở cửa hàng gần đây (90 ngày). Cần bổ sung số liệu từ nguồn chính thức.",
+      title: `Cập nhật số cửa hàng PNJ (${FALLBACK_STORE_COUNT} cửa hàng)`,
+      summary: `Không thấy tin mở cửa hàng gần đây (90 ngày). Số cửa hàng gần nhất: ${FALLBACK_STORE_COUNT} (nguồn: ${FALLBACK_STORE_ASOF}). Cần bổ sung số liệu khi có nguồn mới.`,
       url: "",
       date: formatDate(new Date(nowTs).toISOString()),
       source: "Auto-generated",
