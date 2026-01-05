@@ -332,9 +332,11 @@ const main = async () => {
 
   // Always try to include the latest store-related article
   if (storeCandidate) {
+    console.log(`[news] Store-related article chosen: ${storeCandidate.title}`);
     pushItem(addStoreCountNote(storeCandidate));
   } else {
     const nowTs = Date.now();
+    console.warn("[news] No store-related article found; adding fallback store update.");
     pushItem({
       title: "Cập nhật mở cửa hàng PNJ",
       summary: "Không thấy tin mở cửa hàng gần đây (90 ngày). Cần bổ sung số liệu từ nguồn chính thức.",
