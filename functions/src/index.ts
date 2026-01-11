@@ -1,6 +1,62 @@
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
+import type { Request, Response } from "express";
 admin.initializeApp();
+
+const LOCAL_ALLOWED_ORIGINS = new Set([
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+]);
+
+const CORS_HEADERS = {
+    "Access-Control-Allow-Methods": "GET, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type",
+    "Access-Control-Max-Age": "3600",
+};
+
+const getPrimaryHost = (req: Request) => {
+    const forwardedHost = req.get("x-forwarded-host");
+    if (forwardedHost) {
+        return forwardedHost.split(",")[0].trim();
+    }
+    return req.get("host") ?? "";
+};
+
+const getAllowedOrigins = (req: Request) => {
+    const origins = new Set<string>(LOCAL_ALLOWED_ORIGINS);
+    const configured = (process.env.ALLOWED_ORIGINS ?? "")
+        .split(",")
+        .map((entry) => entry.trim())
+        .filter(Boolean);
+    configured.forEach((origin) => origins.add(origin));
+
+    const host = getPrimaryHost(req);
+    if (host) {
+        origins.add(`https://${host}`);
+        origins.add(`http://${host}`);
+    }
+    return origins;
+};
+
+const applyCors = (req: Request, res: Response) => {
+    for (const [key, value] of Object.entries(CORS_HEADERS)) {
+        res.set(key, value);
+    }
+
+    const origin = req.get("origin");
+    if (!origin) {
+        return { ok: true };
+    }
+
+    const allowedOrigins = getAllowedOrigins(req);
+    if (!allowedOrigins.has(origin)) {
+        return { ok: false, origin };
+    }
+
+    res.set("Access-Control-Allow-Origin", origin);
+    res.set("Vary", "Origin");
+    return { ok: true };
+};
 
 type NewsItem = {
     id: string;
@@ -55,21 +111,31 @@ const NEWS_DATA: NewsItem[] = [
 ];
 
 export const getSentiments = functions.https.onRequest(async (req, res) => {
-    // Add CORS headers
-    res.set("Access-Control-Allow-Origin", "*");
+    const corsResult = applyCors(req, res);
+    if (!corsResult.ok) {
+        res.status(403).send("Origin not allowed");
+        return;
+    }
+
     if (req.method === "OPTIONS") {
-        res.set("Access-Control-Allow-Methods", "GET");
-        res.set("Access-Control-Allow-Headers", "Content-Type");
         res.status(204).send("");
+        return;
+    }
+
+    if (req.method !== "GET") {
+        res.status(405).send("Method not allowed");
         return;
     }
 
     try {
         const db = admin.firestore();
-        const snapshot = await db.collection("sentiments").get();
-        const sentiments: Record<string, any> = {};
+        const snapshot = await db.collection("sentiments").select("sentiment").get();
+        const sentiments: Record<string, unknown> = {};
         snapshot.forEach((doc) => {
-            sentiments[doc.id] = doc.data().sentiment;
+            const data = doc.data();
+            if (Object.prototype.hasOwnProperty.call(data, "sentiment")) {
+                sentiments[doc.id] = data.sentiment;
+            }
         });
         res.json({
             news: NEWS_DATA,

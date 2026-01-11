@@ -1,8 +1,17 @@
 {
-  "updatedAt": "02/01/2026 21:11",
+  "updatedAt": "05/01/2026 21:59",
   "items": [
     {
       "id": "news_1",
+      "title": "Giá vàng hôm nay mới nhất (4/1) giảm mức thấp: Hàng dài người mua chen chúc, nhà vàng lại dừng bán",
+      "summary": "Giá vàng hôm nay 4/1, vàng SJC và nhẫn vẫn giữ mức thấp hơn so với đỉnh. Người mua tiếp tục xếp hàng dài từ sớm khiến cửa hàng “quá tải“, phải dừng bán.",
+      "url": "https://www.24h.com.vn/kinh-doanh/gia-vang-hom-nay-moi-nhat-4-1-giam-muc-thap-hang-dai-nguoi-mua-chen-chuc-nha-vang-lai-dung-ban-c161a1726913.html",
+      "date": "04/01/2026",
+      "source": "www.24h.com.vn",
+      "tag": "Hoat dong"
+    },
+    {
+      "id": "news_2",
       "title": "TB 2441/TB-SGDHCM ngày 30/12/2025 của SGDCK TPHCM về ngày đăng ký cuối cùng thực hiện quyền (31/12/2025)",
       "summary": "TB 2441/TB-SGDHCM ngày 30/12/2025 của SGDCK TPHCM về ngày đăng ký cuối cùng thực hiện quyền (31/12/2025)",
       "url": "https://cdn.pnj.io/images/quan-he-co-dong/2025/3-TB-2441-cua-SGDCK-ve-ngay-dang-ky-cuoi-cung-thuc-hien-quyen.pdf",
@@ -11,7 +20,7 @@
       "tag": "Thi truong"
     },
     {
-      "id": "news_2",
+      "id": "news_3",
       "title": "CBTT về việc xử phạt vi phạm hành chính về hóa đơn (31/12/2025)",
       "summary": "CBTT về việc xử phạt vi phạm hành chính về hóa đơn (31/12/2025)",
       "url": "https://cdn.pnj.io/images/quan-he-co-dong/2025/59-20251231-PNJ-CBTT-QD-ve-viec-xu-phat-vi-pham-hanh-chinh-ve-hoa-don_Signed.pdf",
@@ -20,30 +29,21 @@
       "tag": "Cong bo TT"
     },
     {
-      "id": "news_3",
-      "title": "Some stocks to watch on December 29th.",
-      "summary": "Securities companies have just issued recommendations on several stocks to watch for today's trading session, December 29th.",
-      "url": "https://vietbao.vn/en/mot-so-co-phieu-can-quan-tam-ngay-29-12-577839.html",
-      "date": "28/12/2025",
-      "source": "vietbao.vn",
-      "tag": "Thi truong"
-    },
-    {
       "id": "news_4",
-      "title": "Vietnam’s jewelry major PNJ to pay cash dividend, seek share bonus as stock defies market slump",
-      "summary": "Phu Nhuan Jewelry JSC (HoSE: PNJ) said it will pay an interim cash dividend for 2025 at a rate of 10% and seek shareholder approval to issue bonus shares in January next year. Its stock has risen against a broader market correction.",
-      "url": "https://theinvestor.vn/vietnams-jewelry-major-pnj-to-pay-cash-dividend-seek-share-bonus-as-stock-defies-market-slump-d17978.html",
-      "date": "28/12/2025",
-      "source": "theinvestor.vn",
+      "title": "Báo cáo kết quả giao dịch cổ phiếu của Công đoàn cơ sở CTCP Vàng bạc đá quý Phú Nhuận (29/12/2025)",
+      "summary": "Báo cáo kết quả giao dịch cổ phiếu của Công đoàn cơ sở CTCP Vàng bạc đá quý Phú Nhuận (29/12/2025)",
+      "url": "https://cdn.pnj.io/images/quan-he-co-dong/2025/17b-20251229-PNJ-BC-giao-dich-cp-Phu-luc-VX-Cong-doan-co-so-CBTT.pdf",
+      "date": "29/12/2025",
+      "source": "pnj.com.vn (IR)",
       "tag": "Thi truong"
     },
     {
       "id": "news_5",
-      "title": "Tuoi Tre Newspaper, PNJ present Kim Sang Sik with 24K gold medal",
-      "summary": "Newspaper, in collaboration with Phu Nhuan Jewelry (PNJ), presented head coach Kim Sang Sik with a special gold medal crafted entirely from 24K gold, weighing the equivalent of 33 chi (around 124 ...",
-      "url": "https://english.vov.vn/en/sports/tuoi-tre-newspaper-pnj-present-kim-sang-sik-with-24k-gold-medal-post1256240.vov",
-      "date": "12/04/2025",
-      "source": "english.vov.vn",
+      "title": "TB về ngày đăng ký cuối cùng để thực hiện lấy ý kiến cổ đông bằng văn bản và tạm ứng cổ tức bằng tiền đợt 1 năm 2025 (26/12/2025)",
+      "summary": "TB về ngày đăng ký cuối cùng để thực hiện lấy ý kiến cổ đông bằng văn bản và tạm ứng cổ tức bằng tiền đợt 1 năm 2025 (26/12/2025)",
+      "url": "https://cdn.pnj.io/images/quan-he-co-dong/2025/57a-20251226-PNJ-TB-ve-ngay-dang-ky-cuoi-cung-lay-y-kien-co-dong-ban-van-ban-va-tam-ung-co-tuc-bang-tien-dot-1-nam-2025.pdf",
+      "date": "26/12/2025",
+      "source": "pnj.com.vn (IR)",
       "tag": "Thi truong"
     }
   ]

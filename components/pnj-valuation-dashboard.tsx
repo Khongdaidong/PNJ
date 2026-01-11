@@ -56,6 +56,137 @@ function clamp(x: number, lo: number, hi: number) {
     return Math.min(hi, Math.max(lo, x));
 }
 
+type ImpactDirection = "up" | "down" | "neutral";
+type ImpactConfidence = "low" | "medium" | "high";
+type ImpactResult = { direction: ImpactDirection; confidence: ImpactConfidence; reason: string };
+type KPIImpact = { stores: ImpactResult; sssg: ImpactResult; margin: ImpactResult };
+
+const normalizeText = (text: string) =>
+    text
+        .normalize("NFD")
+        .replace(/\p{Diacritic}/gu, "")
+        .toLowerCase();
+
+const neutralImpact = (reason: string): ImpactResult => ({
+    direction: "neutral",
+    confidence: "low",
+    reason
+});
+
+const TAG_LABELS: Record<string, string> = {
+    "tai chinh": "Tai chinh",
+    "hoat dong": "Hoat dong",
+    "cong bo tt": "Cong bo TT",
+    "thuong hieu": "Thuong hieu",
+    "thi truong": "Thi truong",
+};
+
+const getTagLabel = (tag: string) => {
+    const key = normalizeText(tag || "");
+    return TAG_LABELS[key] || tag;
+};
+
+const STORE_POS = [
+    "store",
+    "stores",
+    "open",
+    "opening",
+    "expand",
+    "expansion",
+    "new store",
+    "net new",
+    "rollout",
+    "cua hang",
+    "mo moi",
+    "mo rong",
+    "mo them",
+    "tang cua hang",
+    "tang diem ban",
+    "chuoi",
+    "showroom",
+];
+
+const STORE_NEG = [
+    "close",
+    "closing",
+    "closure",
+    "shut",
+    "shutdown",
+    "dong cua",
+    "thu hep",
+    "giam cua hang",
+    "cat giam",
+    "tam dong",
+];
+
+const SSSG_POS = [
+    "sssg",
+    "same-store",
+    "same store",
+    "lfl",
+    "like-for-like",
+    "same shop",
+    "same store sales",
+    "sales per store",
+];
+
+const SSSG_NEG = [
+    "sssg down",
+    "same-store down",
+    "same store down",
+    "same store decline",
+    "lfl down",
+];
+
+const MARGIN_POS = [
+    "gross margin",
+    "margin expansion",
+    "improve margin",
+    "higher margin",
+    "gpm",
+    "bien loi nhuan",
+    "bien gop",
+];
+
+const MARGIN_NEG = [
+    "margin compression",
+    "lower margin",
+    "cost pressure",
+    "gpm down",
+    "giam bien",
+];
+
+const matchKeywords = (text: string, keywords: string[]) => {
+    const lower = normalizeText(text);
+    return keywords.filter((keyword) => lower.includes(keyword));
+};
+
+const scoreImpact = (text: string, pos: string[], neg: string[]): ImpactResult => {
+    const posHits = matchKeywords(text, pos);
+    const negHits = matchKeywords(text, neg);
+    const totalHits = posHits.length + negHits.length;
+    if (totalHits === 0) {
+        return neutralImpact("no KPI keywords");
+    }
+    const score = posHits.length - negHits.length;
+    const direction = score > 0 ? "up" : score < 0 ? "down" : "neutral";
+    const confidence = totalHits >= 3 ? "high" : totalHits === 2 ? "medium" : "low";
+    const reasonParts = [] as string[];
+    if (posHits.length) reasonParts.push(`+${posHits.slice(0, 3).join(", ")}`);
+    if (negHits.length) reasonParts.push(`-${negHits.slice(0, 3).join(", ")}`);
+    const reason = reasonParts.length ? `keywords: ${reasonParts.join(" ")}` : "no KPI keywords";
+    return { direction, confidence, reason };
+};
+
+const assessKpiImpact = (item: { title: string; summary: string; tag: string }): KPIImpact => {
+    const text = `${item.title}. ${item.summary}`;
+    return {
+        stores: scoreImpact(text, STORE_POS, STORE_NEG),
+        sssg: scoreImpact(text, SSSG_POS, SSSG_NEG),
+        margin: scoreImpact(text, MARGIN_POS, MARGIN_NEG),
+    };
+};
+
 // -----------------------------
 // Core valuation math
 // Units:
@@ -751,8 +882,6 @@ export default function PNJValuationDashboard() {
     const ScenarioEditor = () => {
         const isBear = activeScenario === "Bear";
         const isBase = activeScenario === "Base";
-        const isBull = activeScenario === "Bull";
-
         const s = isBear ? scBear : isBase ? scBase : scBull;
         const setS = isBear ? setScBear : isBase ? setScBase : setScBull;
 
@@ -1050,7 +1179,12 @@ export default function PNJValuationDashboard() {
                             <CartesianGrid strokeDasharray="3 3" />
                             <XAxis dataKey="quarter" />
                             <YAxis tickFormatter={(v) => nf0.format(safeNum(v))} />
-                            <Tooltip formatter={(v: any, name: any) => [`${nf0.format(safeNum(v))}`, name === "planned" ? "Plan" : "Actual"]} />
+                            <Tooltip
+                                formatter={(value: unknown, name: unknown) => [
+                                    `${nf0.format(safeNum(value))}`,
+                                    name === "planned" ? "Plan" : "Actual",
+                                ]}
+                            />
                             <Legend />
                             <Line type="monotone" dataKey="planned" name="Plan" dot={false} />
                             <Line type="monotone" dataKey="actual" name="Actual" dot={false} />
@@ -1215,7 +1349,12 @@ export default function PNJValuationDashboard() {
                             <CartesianGrid strokeDasharray="3 3" />
                             <XAxis dataKey="year" />
                             <YAxis tickFormatter={(v) => nf1.format(safeNum(v))} />
-                            <Tooltip formatter={(v: any, name: any) => [`${nf1.format(safeNum(v))} bn`, name]} />
+                            <Tooltip
+                                formatter={(value: unknown, name: unknown) => [
+                                    `${nf1.format(safeNum(value))} bn`,
+                                    typeof name === "string" ? name : String(name ?? ""),
+                                ]}
+                            />
                             <Legend />
                             <Line type="monotone" dataKey="revenue" name="Revenue" dot={false} />
                             <Line type="monotone" dataKey="fcff" name="FCFF" dot={false} />
@@ -1498,138 +1637,6 @@ export default function PNJValuationDashboard() {
         const resolvedNews = newsData?.items?.length ? newsData.items : news;
         const resolvedUpdatedAt = newsData?.updatedAt || newsUpdatedAt;
 
-        type ImpactDirection = "up" | "down" | "neutral";
-        type ImpactConfidence = "low" | "medium" | "high";
-        type ImpactResult = { direction: ImpactDirection; confidence: ImpactConfidence; reason: string };
-        type KPIImpact = { stores: ImpactResult; sssg: ImpactResult; margin: ImpactResult };
-
-        const neutralImpact = (reason: string): ImpactResult => ({
-            direction: "neutral",
-            confidence: "low",
-            reason
-        });
-
-        const normalizeText = (text: string) =>
-            text
-                .normalize("NFD")
-                .replace(/\p{Diacritic}/gu, "")
-                .toLowerCase();
-
-
-        const tagLabels: Record<string, string> = {
-            "tai chinh": "Tai chinh",
-            "hoat dong": "Hoat dong",
-            "cong bo tt": "Cong bo TT",
-            "thuong hieu": "Thuong hieu",
-            "thi truong": "Thi truong",
-        };
-
-        const getTagLabel = (tag: string) => {
-            const key = normalizeText(tag || "");
-            return tagLabels[key] || tag;
-        };
-
-        const storePos = [
-            "store",
-            "stores",
-            "open",
-            "opening",
-            "expand",
-            "expansion",
-            "new store",
-            "net new",
-            "rollout",
-            "cua hang",
-            "mo moi",
-            "mo rong",
-            "mo them",
-            "tang cua hang",
-            "tang diem ban",
-            "chuoi",
-            "showroom",
-        ];
-
-        const storeNeg = [
-            "close",
-            "closing",
-            "closure",
-            "shut",
-            "shutdown",
-            "dong cua",
-            "thu hep",
-            "giam cua hang",
-            "cat giam",
-            "tam dong",
-        ];
-
-        const sssgPos = [
-            "sssg",
-            "same-store",
-            "same store",
-            "lfl",
-            "like-for-like",
-            "same shop",
-            "same store sales",
-            "sales per store",
-        ];
-
-        const sssgNeg = [
-            "sssg down",
-            "same-store down",
-            "same store down",
-            "same store decline",
-            "lfl down",
-        ];
-
-        const marginPos = [
-            "gross margin",
-            "margin expansion",
-            "improve margin",
-            "higher margin",
-            "gpm",
-            "bien loi nhuan",
-            "bien gop",
-        ];
-
-        const marginNeg = [
-            "margin compression",
-            "lower margin",
-            "cost pressure",
-            "gpm down",
-            "giam bien",
-        ];
-
-        const matchKeywords = (text: string, keywords: string[]) => {
-            const lower = normalizeText(text);
-            return keywords.filter((keyword) => lower.includes(keyword));
-        };
-
-        const scoreImpact = (text: string, pos: string[], neg: string[]): ImpactResult => {
-            const posHits = matchKeywords(text, pos);
-            const negHits = matchKeywords(text, neg);
-            const totalHits = posHits.length + negHits.length;
-            if (totalHits === 0) {
-                return neutralImpact("no KPI keywords");
-            }
-            const score = posHits.length - negHits.length;
-            const direction = score > 0 ? "up" : score < 0 ? "down" : "neutral";
-            const confidence = totalHits >= 3 ? "high" : totalHits === 2 ? "medium" : "low";
-            const reasonParts = [] as string[];
-            if (posHits.length) reasonParts.push(`+${posHits.slice(0, 3).join(", ")}`);
-            if (negHits.length) reasonParts.push(`-${negHits.slice(0, 3).join(", ")}`);
-            const reason = reasonParts.length ? `keywords: ${reasonParts.join(" ")}` : "no KPI keywords";
-            return { direction, confidence, reason };
-        };
-
-        const assessKpiImpact = (item: { title: string; summary: string; tag: string }): KPIImpact => {
-            const text = `${item.title}. ${item.summary}`;
-            return {
-                stores: scoreImpact(text, storePos, storeNeg),
-                sssg: scoreImpact(text, sssgPos, sssgNeg),
-                margin: scoreImpact(text, marginPos, marginNeg),
-            };
-        };
-
         const impactsById = React.useMemo(() => {
             const map: Record<string, KPIImpact> = {};
             resolvedNews.forEach((item) => {
@@ -1902,7 +1909,7 @@ export default function PNJValuationDashboard() {
                                                     <XAxis dataKey="scenario" />
                                                     <YAxis tickFormatter={(v) => nf0.format(safeNum(v))} />
                                                     <Tooltip
-                                                        formatter={(v: any) => [`${nf0.format(safeNum(v))} đ/cp`, "Giá mục tiêu"]}
+                                                        formatter={(value: unknown) => [`${nf0.format(safeNum(value))} đ/cp`, "Giá mục tiêu"]}
                                                     />
                                                     <Legend />
                                                     <Bar dataKey="target" name="Giá mục tiêu" />
